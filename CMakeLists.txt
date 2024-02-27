@@ -48,93 +48,102 @@ include_directories(${SYMENGINE_INCLUDE_DIRS}
         MKL::MKL)
 
 link_directories(${MKL_LIBRARY_DIR})
+# Run with cmake --fresh -DCREATE_DOCS=ON .. only when documentation needs to be updated.
 
-add_executable(disMech
-        src/main.cpp
-        src/world.cpp
-        robotDescription.cpp
+# If docs change and you want to preview the updates in index.html, you'll need to rm -rf * and
+# remake everything in build. Don't make clean && make. Kind of annoying but this should only be
+# done for previewing. All updates to the actual docs will be done more fluidly.
 
-        src/mechanics/baseForce.cpp
-        src/mechanics/elasticRod.cpp
-        src/mechanics/elasticJoint.cpp
-        src/mechanics/softRobots.cpp
-        src/mechanics/elasticShell.cpp
+# If wanting to rebuild source code, will have to cmake --fresh .. again.
 
-        src/mechanics/forceContainer.cpp
+# Probably a good idea to split the documentation cmake process into its own directory later.
+option(CREATE_DOCS OFF)
 
-        src/mechanics/inner_forces/inertialForce.cpp
-        src/mechanics/inner_forces/elasticStretchingForce.cpp
-        src/mechanics/inner_forces/elasticStretchingForceShell.cpp
-        src/mechanics/inner_forces/elasticBendingForce.cpp
-        src/mechanics/inner_forces/elasticBendingForceShell.cpp
-        src/mechanics/inner_forces/elasticTwistingForce.cpp
-
-        src/mechanics/external_forces/gravityForce.cpp
-        src/mechanics/external_forces/dampingForce.cpp
-        src/mechanics/external_forces/floorContactForce.cpp
-        src/mechanics/external_forces/symbolicEquations.cpp
-        src/mechanics/external_forces/uniformConstantForce.cpp
-        src/mechanics/external_forces/collisionDetector.cpp
-        src/mechanics/external_forces/contactForce.cpp
-
-        src/time_steppers/baseTimeStepper.cpp
-
-        src/time_steppers/explicitTimeStepper.cpp
-        src/time_steppers/forwardEuler.cpp
-        src/time_steppers/verletPosition.cpp
-
-        src/time_steppers/implicitTimeStepper.cpp
-        src/time_steppers/backwardEuler.cpp
-        src/time_steppers/implicitMidpoint.cpp
-
-        src/solvers/baseSolver.cpp
-        src/solvers/pardisoSolver.cpp
-        src/solvers/dgbsvSolver.cpp
-
-        src/logging/worldLogger.cpp
-        src/logging/rodNodeLogger.cpp
-        src/logging/shellNodeLogger.cpp
-        src/logging/velocityLogger.cpp
-
-        src/simulation_environments/derSimulationEnvironment.cpp
-        src/simulation_environments/headlessDERSimulationEnvironment.cpp
-        src/simulation_environments/openglDERSimulationEnvironment.cpp
-
-        src/controllers/baseController.cpp
-        src/controllers/openLoopUniformKappaBarController.cpp
-        src/controllers/activeEntanglementController.cpp
-
-        src/utils/utils.cpp
-        )
-
-target_include_directories(disMech PRIVATE
-        src
-)
-
-target_link_libraries(disMech PRIVATE
-        ${OPENGL_LIBRARIES}
-        ${GLUT_LIBRARIES}
-        MKL::MKL
-        Eigen3::Eigen
-        ${LAPACK_LIBRARIES}
-        ${BLAS_LIBRARIES}
-
-        lapack
-
-        # gfortran
-        stdc++fs
-        Threads::Threads
-        m
-        ${SYMENGINE_LIBRARIES}
-        fcl
-)
-
-if (OpenMP_CXX_FOUND)
-    target_link_libraries(disMech PUBLIC OpenMP::OpenMP_CXX)
-endif ()
-
-set(CREATE_DOC_FLAG "false") # make this flag true if you want to generate documentation
-
-if(CREATE_DOC_FLAG)
+if(CREATE_DOCS)
     add_subdirectory("docs")
+else()
+
+    add_executable(disMech
+            src/main.cpp
+            src/world.cpp
+            robotDescription.cpp
+
+            src/mechanics/baseForce.cpp
+            src/mechanics/elasticRod.cpp
+            src/mechanics/elasticJoint.cpp
+            src/mechanics/softRobots.cpp
+            src/mechanics/elasticShell.cpp
+
+            src/mechanics/forceContainer.cpp
+
+            src/mechanics/inner_forces/inertialForce.cpp
+            src/mechanics/inner_forces/elasticStretchingForce.cpp
+            src/mechanics/inner_forces/elasticStretchingForceShell.cpp
+            src/mechanics/inner_forces/elasticBendingForce.cpp
+            src/mechanics/inner_forces/elasticBendingForceShell.cpp
+            src/mechanics/inner_forces/elasticTwistingForce.cpp
+
+            src/mechanics/external_forces/gravityForce.cpp
+            src/mechanics/external_forces/dampingForce.cpp
+            src/mechanics/external_forces/floorContactForce.cpp
+            src/mechanics/external_forces/symbolicEquations.cpp
+            src/mechanics/external_forces/uniformConstantForce.cpp
+            src/mechanics/external_forces/collisionDetector.cpp
+            src/mechanics/external_forces/contactForce.cpp
+
+            src/time_steppers/baseTimeStepper.cpp
+
+            src/time_steppers/explicitTimeStepper.cpp
+            src/time_steppers/forwardEuler.cpp
+            src/time_steppers/verletPosition.cpp
+
+            src/time_steppers/implicitTimeStepper.cpp
+            src/time_steppers/backwardEuler.cpp
+            src/time_steppers/implicitMidpoint.cpp
+
+            src/solvers/baseSolver.cpp
+            src/solvers/pardisoSolver.cpp
+            src/solvers/dgbsvSolver.cpp
+
+            src/logging/worldLogger.cpp
+            src/logging/rodNodeLogger.cpp
+            src/logging/shellNodeLogger.cpp
+            src/logging/velocityLogger.cpp
+
+            src/simulation_environments/derSimulationEnvironment.cpp
+            src/simulation_environments/headlessDERSimulationEnvironment.cpp
+            src/simulation_environments/openglDERSimulationEnvironment.cpp
+
+            src/controllers/baseController.cpp
+            src/controllers/openLoopUniformKappaBarController.cpp
+            src/controllers/activeEntanglementController.cpp
+
+            src/utils/utils.cpp
+            )
+
+    target_include_directories(disMech PRIVATE
+            src
+    )
+
+    target_link_libraries(disMech PRIVATE
+            ${OPENGL_LIBRARIES}
+            ${GLUT_LIBRARIES}
+            MKL::MKL
+            Eigen3::Eigen
+            ${LAPACK_LIBRARIES}
+            ${BLAS_LIBRARIES}
+
+            lapack
+
+            # gfortran
+            stdc++fs
+            Threads::Threads
+            m
+            ${SYMENGINE_LIBRARIES}
+            fcl
+    )
+
+    if (OpenMP_CXX_FOUND)
+        target_link_libraries(disMech PUBLIC OpenMP::OpenMP_CXX)
+    endif ()
 endif()
