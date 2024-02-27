@@ -4,14 +4,18 @@
 #include "eigenIncludes.h"
 #include "robotDescription.h"
 
-#include "rod_mechanics/softRobots.h"
-#include "rod_mechanics/forceContainer.h"
+#include "mechanics/softRobots.h"
+#include "mechanics/forceContainer.h"
 
 // include inner force classes
-#include "rod_mechanics/inner_forces/inertialForce.h"
-#include "rod_mechanics/inner_forces/elasticStretchingForce.h"
-#include "rod_mechanics/inner_forces/elasticBendingForce.h"
-#include "rod_mechanics/inner_forces/elasticTwistingForce.h"
+#include "mechanics/inner_forces/inertialForce.h"
+#include "mechanics/inner_forces/elasticStretchingForce.h"
+#include "mechanics/inner_forces/elasticBendingForce.h"
+#include "mechanics/inner_forces/elasticTwistingForce.h"
+
+// include shell elastic forces
+#include "mechanics/inner_forces/elasticStretchingForceShell.h"
+#include "mechanics/inner_forces/elasticBendingForceShell.h"
 
 // include time stepper
 #include "time_steppers/forwardEuler.h"
@@ -29,6 +33,7 @@ public:
     ~world();
     void updateTimeStep();
     double getCoordinate(int i, int limb_idx);
+    double getShellCoordinate(int i, int shell_limb_idx);
     VectorXd getM1(int i, int limb_idx);
     VectorXd getM2(int i, int limb_idx);
 
@@ -42,6 +47,7 @@ public:
 private:
     shared_ptr<forceContainer> forces;
     shared_ptr<baseTimeStepper> stepper;
+    
 
     int time_step;
     double curr_time;

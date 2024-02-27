@@ -3,15 +3,15 @@
 
 #include <stdexcept>
 
-#include "rod_mechanics/softRobots.h"
-#include "rod_mechanics/forceContainer.h"
+#include "mechanics/softRobots.h"
+#include "mechanics/forceContainer.h"
 
 // include external forces
-#include "rod_mechanics/external_forces/dampingForce.h"
-#include "rod_mechanics/external_forces/gravityForce.h"
-#include "rod_mechanics/external_forces/floorContactForce.h"
-#include "rod_mechanics/external_forces/uniformConstantForce.h"
-#include "rod_mechanics/external_forces/contactForce.h"
+#include "mechanics/external_forces/dampingForce.h"
+#include "mechanics/external_forces/gravityForce.h"
+#include "mechanics/external_forces/floorContactForce.h"
+#include "mechanics/external_forces/uniformConstantForce.h"
+#include "mechanics/external_forces/contactForce.h"
 
 // include controllers
 #include "controllers/openLoopUniformKappaBarController.h"
@@ -19,6 +19,7 @@
 
 // different type of loggers
 #include "logging/rodNodeLogger.h"
+#include "logging/shellNodeLogger.h"
 #include "logging/velocityLogger.h"
 
 #include "utils/utils.h"
@@ -46,6 +47,7 @@ struct simParams {
     bool line_search = true;                           // Enable line search method
     numerical_integration_scheme nis = BACKWARD_EULER; // Numerical integration scheme*
     int debug_verbosity = 1;                           // Prints certain debug statements
+    bool structure_shell = false;                      // True if simulating shell, else false if simulating rod
 };
 
 
@@ -54,5 +56,7 @@ void get_robot_description(int argc, char** argv,
                            const shared_ptr<forceContainer>& forces,
                            shared_ptr<worldLogger>& logger,
                            simParams& sim_params);
+
+void inputProcessorFunc(const std::string inputFileName, vector<Vector3d>& Nodes, vector<vector<int>>& facenodes);
 
 #endif

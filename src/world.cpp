@@ -7,15 +7,26 @@ world::world(const shared_ptr<softRobots>& soft_robots,
              soft_robots(soft_robots), forces(forces),
              time_step(0), curr_time(0.0), total_time(sim_params.sim_time) {
 
-    // Declare inner elastic forces. These should never be optional.
-    forces->addForce(make_shared<elasticStretchingForce>(soft_robots));
-    forces->addForce(make_shared<elasticBendingForce>(soft_robots));
-    forces->addForce(make_shared<elasticTwistingForce>(soft_robots));
+    
+    // Declare inner elastic forces. 
+    // add shell elastic forces
+    if (sim_params.structure_shell){
+        forces->addForce(make_shared<elasticStretchingForceShell>(soft_robots));
+        forces->addForce(make_shared<elasticBendingForceShell>(soft_robots));
+    }
+    else { // add rod elastic forces
+        forces->addForce(make_shared<elasticStretchingForce>(soft_robots));
+        forces->addForce(make_shared<elasticBendingForce>(soft_robots));
+        forces->addForce(make_shared<elasticTwistingForce>(soft_robots));
+    }
+    cout<< "no. of forces after adding elastic forces: " << forces->forces.size()<<endl;
 
     // Declare inertial force. Should be avoided for explicit methods
     if (sim_params.nis != FORWARD_EULER && sim_params.nis != VERLET_POSITION) {
         forces->addForce(make_shared<inertialForce>(soft_robots));
     }
+
+    cout<< "no. of forces after adding inertial force: " << forces->forces.size()<<endl;
 
     // Set up the time stepper
     switch(sim_params.nis) {
@@ -26,14 +37,26 @@ world::world(const shared_ptr<softRobots>& soft_robots,
             stepper = make_shared<verletPosition>(soft_robots, forces, sim_params);
             break;
         case BACKWARD_EULER:
+            cout<<"selected backwardEuler"<<endl;
             stepper = make_shared<backwardEuler>(soft_robots, forces, sim_params, PARDISO_SOLVER);
+            cout<<"constructed backwardEuler"<<endl;
             break;
         case IMPLICIT_MIDPOINT:
             stepper = make_shared<implicitMidpoint>(soft_robots, forces, sim_params, PARDISO_SOLVER);
             break;
     }
+    cout<<"after stepper declaration"<<endl;
 
     stepper->initStepper();
+
+    cout<<"after the initStepper() step"<<endl;
+
+    
+    // for (const auto& limb : soft_robots->limbs) cout<<"rod-limb no. of vertices: "<<limb->nv; // this kind of thing doesn't give errors
+
+    // cout<< soft_robots->limbs[0]->nv; //issue
+
+    // cout<<"size of offsets for rod limbs set for the time-stepper linked with force0:"<< forces->forces[0]->stepper->offsets.size()<<endl; gives segmentation fault
 
     if (sim_params.enable_2d_sim) {
         for (const auto& limb : soft_robots->limbs) limb->enable2DSim();
@@ -42,8 +65,12 @@ world::world(const shared_ptr<softRobots>& soft_robots,
     // Update boundary conditions
     updateCons();
 
+    cout<<"updateCons() done"<<endl;
+
     // Allocate every thing to prepare for the first iteration
     stepper->updateSystemForNextTimeStep();
+
+    cout<<"stepper ->updateSystemForNextTimeStep() done"<<endl;
 }
 
 
@@ -54,6 +81,10 @@ void world::updateCons()
 {
     for (const auto &limb : soft_robots->limbs)
         limb->updateMap();
+    for (const auto &shell_limb : soft_robots->shell_limbs)
+        shell_limb->updateMap();
+
+    cout<<"we are here"<<endl;
     stepper->update();
 }
 
@@ -113,6 +144,11 @@ bool world::simulationRunning() const {
 double world::getCoordinate(int i, int limb_idx)
 {
     return soft_robots->limbs[limb_idx]->x[i];
+}
+
+double world::getShellCoordinate(int i, int shell_limb_idx)
+{
+    return soft_robots->shell_limbs[shell_limb_idx]->x[i];
 }
 
 

@@ -56,6 +56,7 @@ pardisoSolver::~pardisoSolver() = default;
 
 
 void pardisoSolver::integrator() {
+    // cout<< "inside pardiso integrator"<<endl;
     int n = stepper->freeDOF;
 
     MKL_INT* ia = stepper->ia;

@@ -3,8 +3,8 @@
 
 #include "eigenIncludes.h"
 #include "robotDescription.h"
-#include "rod_mechanics/softRobots.h"
-#include "rod_mechanics/forceContainer.h"
+#include "mechanics/softRobots.h"
+#include "mechanics/forceContainer.h"
 #include "controllers/baseController.h"
 
 
@@ -17,6 +17,7 @@ public:
     virtual ~baseTimeStepper();
 
     void addForce(int ind, double p, int limb_idx);
+    void addForceShell(int ind, double p, int shell_limb_idx);
 
     virtual void initStepper();
     virtual void prepSystemForIteration();
@@ -24,6 +25,8 @@ public:
     virtual void update();
     virtual void integrator() = 0;
     virtual void addJacobian(int ind1, int ind2, double p, int limb_idx) = 0;
+    virtual void addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx) = 0;
+    virtual void addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx1, int shell_limb_idx2) = 0;
     virtual void addJacobian(int ind1, int ind2, double p, int limb_idx1, int limb_idx2) = 0;
     virtual void updateSystemForNextTimeStep() = 0;
     virtual double stepForwardInTime() = 0;
@@ -35,17 +38,21 @@ public:
     MatrixXd Jacobian;
 
     int freeDOF;
+    int nDOF;
     vector<int> offsets;
+    vector<int> offsets_shell;
     int iter = 0;
 
 
 protected:
     int mappedInd, mappedInd1, mappedInd2;
     int offset;
+    int offset_shell;
     double dt;
     double alpha = 1.0;
 
     vector<shared_ptr<elasticRod>>& limbs;
+    vector<shared_ptr<elasticShell>>& shell_limbs;
     vector<shared_ptr<elasticJoint>>& joints;
     vector<shared_ptr<baseController>>& controllers;
     shared_ptr<forceContainer> forces;

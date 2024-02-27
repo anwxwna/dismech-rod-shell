@@ -25,9 +25,12 @@ int main(int argc,char *argv[])
     shared_ptr<worldLogger> logger = nullptr;
 
     get_robot_description(argc, argv, soft_robots, forces, logger, sim_params);
+    // // debugging
+    // cout<< "no. of shell limbs: " << soft_robots->shell_limbs.size()<<endl;
+    // cout<< "no. of rod limbs: " << soft_robots->limbs.size()<<endl;
 
     my_world = make_shared<world>(soft_robots, forces, sim_params);
-
+    
     verbosity = sim_params.debug_verbosity;
 
     unique_ptr<derSimulationEnvironment> env;
@@ -37,6 +40,8 @@ int main(int argc,char *argv[])
     else {
         env = make_unique<headlessDERSimulationEnvironment>(my_world, sim_params, logger);
     }
+    // cout<<"is_logging: "<< env->is_logging<<endl;
+    // cout<<"Now simulation  will start running."<< endl;
 
     env->runSimulation();
 

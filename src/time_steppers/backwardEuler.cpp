@@ -5,18 +5,21 @@ backwardEuler::backwardEuler(const shared_ptr<softRobots>& soft_robots,
                              const simParams& sim_params, solverType solver_type) :
                              implicitTimeStepper(soft_robots, forces, sim_params, solver_type)
 {
+    
 }
 
 backwardEuler::~backwardEuler() = default;
 
 
 double backwardEuler::newtonMethod(double dt) {
+
     double normf;
     double normf0 = 0;
     bool solved = false;
     iter = 0;
 
     while (!solved) {
+
         prepSystemForIteration();
 
         forces->computeForcesAndJacobian(dt);
@@ -37,13 +40,18 @@ double backwardEuler::newtonMethod(double dt) {
 
         // If sim can't converge, apply adaptive time stepping if enabled.
         if (adaptive_time_stepping && iter != 0 && iter % adaptive_time_stepping_threshold == 0) {
+            // cout<<"inside adaptive stepping for loop"<<endl;
             dt *= 0.5;
             for (const auto& limb : limbs) {
                 limb->updateGuess(0.01, dt);
             }
+            for (const auto& shell_limb : shell_limbs) {
+                shell_limb->updateGuess(0.01, dt);
+            }
             iter++;
             continue;
         }
+
 
         // Solve equations of motion
         integrator();
@@ -53,6 +61,8 @@ double backwardEuler::newtonMethod(double dt) {
         double curr_dx;
         double max_dx = 0;
         int limb_idx = 0;
+        int shell_limb_idx = 0;
+
         for (const auto& limb : limbs) {
             // TODO: make sure that joint dx's are properly included in this?
             curr_dx = limb->updateNewtonX(dx, offsets[limb_idx], alpha);
@@ -63,6 +73,17 @@ double backwardEuler::newtonMethod(double dt) {
             }
 
             limb_idx++;
+        }
+        // shell
+        for (const auto& shell_limb : shell_limbs) {
+            curr_dx = shell_limb->updateNewtonX(dx, offsets_shell[shell_limb_idx], alpha);
+
+            // Record max change dx
+            if (curr_dx > max_dx) {
+                max_dx = curr_dx;
+            }
+
+            shell_limb_idx++;
         }
 
         // Dynamics tolerance check
@@ -92,6 +113,10 @@ void backwardEuler::lineSearch(double dt) {
     for (auto& joint : joints) {
         joint->x_ls = joint->x;
     }
+    for (auto& shell_limb : shell_limbs) {
+        shell_limb->x= shell_limb->x_ls;
+    }
+
     // Initialize an interval for optimal learning rate alpha
     double amax = 2;
     double amin = 1e-3;
@@ -109,6 +134,7 @@ void backwardEuler::lineSearch(double dt) {
     double m2 = 0.9;
     double m1 = 0.1;
     int iter_l = 0;
+
     while (!success) {
         int limb_idx = 0;
         for (auto& joint : joints) {
@@ -118,6 +144,12 @@ void backwardEuler::lineSearch(double dt) {
             limb->x= limb->x_ls;
             limb->updateNewtonX(dx, offsets[limb_idx], alpha);
             limb_idx++;
+        }
+        int shell_limb_idx = 0;
+        for (auto& shell_limb : shell_limbs) {
+            shell_limb->x= shell_limb->x_ls;
+            shell_limb->updateNewtonX(dx, offsets_shell[shell_limb_idx], alpha);
+            shell_limb_idx++;
         }
 
         prepSystemForIteration();
@@ -161,15 +193,23 @@ void backwardEuler::lineSearch(double dt) {
     for (auto& joint : joints) {
         joint->x = joint->x_ls;
     }
+    for (auto& shell_limb : shell_limbs) {
+        shell_limb->x= shell_limb->x_ls;
+    }
+
     alpha = a;
 }
 
 
 double backwardEuler::stepForwardInTime() {
+
     dt = orig_dt;
 
     // Newton Guess. Just use approximately last solution
     for (const auto& limb : limbs) limb->updateGuess(0.01, dt);
+
+    // Newton Guess. Just use approximately last solution
+    for (const auto& shell_limb : shell_limbs) shell_limb->updateGuess(0.01, dt);
 
     // Perform collision detection if contact is enabled
     if (forces->cf) forces->cf->broadPhaseCollisionDetection();
@@ -182,6 +222,14 @@ double backwardEuler::stepForwardInTime() {
         limb->u = (limb->x - limb->x0) / dt;
         // Update start position
         limb->x0 = limb->x;
+    }
+
+    // Update shell limbs
+    for (const auto& shell_limb : shell_limbs) {
+        // Update velocity
+        shell_limb->u = (shell_limb->x - shell_limb->x0) / dt;
+        // Update start position
+        shell_limb->x0 = shell_limb->x;
     }
 
     updateSystemForNextTimeStep();

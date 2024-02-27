@@ -15,7 +15,7 @@ implicitTimeStepper::implicitTimeStepper(const shared_ptr<softRobots>& soft_robo
                                          adaptive_time_stepping(sim_params.adaptive_time_stepping != 0),
                                          solver_type(solver_type)
 {
-    Jacobian = MatrixXd::Zero(freeDOF, freeDOF);
+    Jacobian = MatrixXd::Zero(freeDOF,freeDOF);
 }
 
 
@@ -53,6 +53,13 @@ shared_ptr<implicitTimeStepper> implicitTimeStepper::shared_from_this() {
 
 
 void implicitTimeStepper::integrator() {
+    // cout<<"Jacobian is: "<<Jacobian<<endl;
+    // // debugging the zero values only jacobian
+    // for (int i=0; i<Jacobian.rows(); i++ ) { cout<< "inside for loop for non-zero elements in jacobian printing."<<endl;
+    //     for(int j=0; j<Jacobian.cols() ; j++){       
+    //         if (Jacobian(i,j)) cout<< Jacobian(i,j)<<endl;
+    //     }
+    // }
     solver->integrator();
 }
 
@@ -67,6 +74,37 @@ void implicitTimeStepper::addJacobian<PARDISO_SOLVER>(int ind1, int ind2, double
     int offset2 = offsets[limb_idx2];
     int jac_ind1, jac_ind2;
     if (limb1->getIfConstrained(ind1) == 0 && limb2->getIfConstrained(ind2) == 0) {
+        jac_ind1 = mappedInd2+offset2;
+        jac_ind2 = mappedInd1+offset1;
+        if (Jacobian(jac_ind1, jac_ind2) == 0 && p != 0) {
+            ia[jac_ind1+1]++;
+            non_zero_elements.emplace_back(jac_ind1, jac_ind2);
+        }
+        else if (Jacobian(jac_ind1, jac_ind2) != 0 && Jacobian(jac_ind1, jac_ind2) + p == 0) {
+            ia[jac_ind1+1]--;
+            // This is expensive, but it doesn't happen that often. Better than using a set
+            non_zero_elements.erase(remove(non_zero_elements.begin(),
+                                           non_zero_elements.end(),
+                                           pair<int, int>(jac_ind1, jac_ind2)), non_zero_elements.end());
+        }
+        Jacobian(jac_ind1, jac_ind2) += p;
+    }
+}
+template<>
+void implicitTimeStepper::addJacobianShell<PARDISO_SOLVER>(int ind1, int ind2, double p, int shell_limb_idx1, int shell_limb_idx2) {
+    
+    shared_ptr<elasticShell> shell_limb1 = shell_limbs[shell_limb_idx1];
+    shared_ptr<elasticShell> shell_limb2 = shell_limbs[shell_limb_idx2];
+
+    mappedInd1 = shell_limb1->fullToUnconsMap[ind1];
+    mappedInd2 = shell_limb2->fullToUnconsMap[ind2];
+
+    int offset1 = offsets_shell[shell_limb_idx1];
+    int offset2 = offsets_shell[shell_limb_idx2];
+    int jac_ind1, jac_ind2;
+
+    if (shell_limb1->getIfConstrained(ind1) == 0 && shell_limb2->getIfConstrained(ind2) == 0) {
+        // cout<<"inside addJacobianShell <Pardiso> if statement"<<endl;
         jac_ind1 = mappedInd2+offset2;
         jac_ind2 = mappedInd1+offset1;
         if (Jacobian(jac_ind1, jac_ind2) == 0 && p != 0) {
@@ -116,11 +154,46 @@ void implicitTimeStepper::addJacobian<DGBSV_SOLVER>(int ind1, int ind2, double p
     }
 }
 
+template<>
+void implicitTimeStepper::addJacobianShell<DGBSV_SOLVER>(int ind1, int ind2, double p, int shell_limb_idx1, int shell_limb_idx2) {
+    shared_ptr<elasticShell> shell_limb1 = shell_limbs[shell_limb_idx1];
+    shared_ptr<elasticShell> shell_limb2 = shell_limbs[shell_limb_idx2];
+    mappedInd1 = shell_limb1->fullToUnconsMap[ind1];
+    mappedInd2 = shell_limb2->fullToUnconsMap[ind2];
+    int offset1 = offsets_shell[shell_limb_idx1];
+    int offset2 = offsets_shell[shell_limb_idx2];
+    int jac_ind1, jac_ind2;
+
+//    dgbsvSolver ls = dynamic_cast<dgbsvSolver&>(*solver);
+
+    int dgbsv_row, dgbsv_col, dgbsv_offset;
+
+    if (shell_limb1->getIfConstrained(ind1) == 0 && shell_limb2->getIfConstrained(ind2) == 0) {
+        jac_ind1 = mappedInd2+offset2;
+        jac_ind2 = mappedInd1+offset1;
+
+//        dgbsv_row = ls.kl + ls.ku + jac_ind1 - jac_ind2;
+//        dgbsv_col = jac_ind2;
+//        dgbsv_offset = dgbsv_row + dgbsv_col * ls.NUMROWS;
+
+        dgbsv_row = kl + ku + jac_ind1 - jac_ind2;
+        dgbsv_col = jac_ind2;
+        dgbsv_offset = dgbsv_row + dgbsv_col * num_rows;
+
+        dgbsv_jacobian[dgbsv_offset] += p;
+        Jacobian(jac_ind1, jac_ind2) += p;
+    }
+}
+
 
 void implicitTimeStepper::addJacobian(int ind1, int ind2, double p, int limb_idx) {
     addJacobian(ind1, ind2, p, limb_idx, limb_idx);
 }
 
+void implicitTimeStepper::addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx) {
+    addJacobianShell(ind1, ind2, p, shell_limb_idx, shell_limb_idx);
+    // addJacobianShell<PARDISO_SOLVER>(ind1, ind2, p, shell_limb_idx, shell_limb_idx);
+}
 
 void implicitTimeStepper::addJacobian(int ind1, int ind2, double p, int limb_idx1, int limb_idx2) {
     switch (solver_type) {
@@ -129,6 +202,20 @@ void implicitTimeStepper::addJacobian(int ind1, int ind2, double p, int limb_idx
             break;
         case DGBSV_SOLVER:
             addJacobian<DGBSV_SOLVER>(ind1, ind2, p, limb_idx1, limb_idx2);
+            break;
+    }
+}
+
+void implicitTimeStepper::addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx1, int shell_limb_idx2) {
+    switch (solver_type) {
+        case PARDISO_SOLVER:
+            // cout<<"selected pardiso solver"<<endl;
+            addJacobianShell<PARDISO_SOLVER>(ind1, ind2, p, shell_limb_idx1, shell_limb_idx2);
+            // cout<<"completed addJacobianShell<pardiso_solver> step"<<endl;
+            break;
+        case DGBSV_SOLVER:
+            // cout<<"selected DGBSV solver"<<endl;
+            addJacobianShell<DGBSV_SOLVER>(ind1, ind2, p, shell_limb_idx1, shell_limb_idx2);
             break;
     }
 }

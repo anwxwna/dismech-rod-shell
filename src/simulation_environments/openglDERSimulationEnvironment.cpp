@@ -127,6 +127,22 @@ void openglDERSimulationEnvironment::derOpenGLDisplay(void) {
                            joint->x(2) * render_scale);
             }
         }
+
+        // Draw shell
+        int shell_limb_idx = 0;
+        for (const auto &shell_limb: opengl_world->soft_robots->shell_limbs) {
+            for (int i = 0; i < shell_limb->ne; i++) {
+                int n1 = shell_limb->EdgeIsBet[i][0] ; // node 1 number
+                int n2 = shell_limb->EdgeIsBet[i][1] ; // node 2 number
+                glVertex3d(opengl_world->getShellCoordinate(3*n1, shell_limb_idx) * render_scale,
+                            opengl_world->getShellCoordinate(3*n1+1, shell_limb_idx) * render_scale,
+                            opengl_world->getShellCoordinate(3*n1+2, shell_limb_idx) * render_scale);
+                glVertex3d(opengl_world->getShellCoordinate(3*n2, shell_limb_idx) * render_scale,
+                            opengl_world->getShellCoordinate(3*n2+1, shell_limb_idx) * render_scale,
+                            opengl_world->getShellCoordinate(3*n2+2, shell_limb_idx) * render_scale);
+                }
+        }
+
         glEnd();
 
         // Draw material directors

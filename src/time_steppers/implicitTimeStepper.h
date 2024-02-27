@@ -19,6 +19,8 @@ public:
 
     void addJacobian(int ind1, int ind2, double p, int limb_idx) override;
     void addJacobian(int ind1, int ind2, double p, int limb_idx1, int limb_idx2) override;
+    void addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx) override;
+    void addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx1, int shell_limb_idx2) override;
     void setZero() override;
     void update() override;
     void integrator() override;
@@ -50,6 +52,9 @@ protected:
 
     template<solverType solver_type>
     void addJacobian(int ind1, int ind2, double p, int limb_idx1, int limb_idx2);
+
+    template<solverType solver_type>
+    void addJacobianShell(int ind1, int ind2, double p, int limb_idx1, int limb_idx2);
 
 private:
     shared_ptr<implicitTimeStepper> shared_from_this();

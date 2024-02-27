@@ -1,5 +1,5 @@
 #include "activeEntanglementController.h"
-#include "rod_mechanics/softRobots.h"
+#include "mechanics/softRobots.h"
 
 
 activeEntanglementController::activeEntanglementController(const shared_ptr <softRobots> &soft_robots,

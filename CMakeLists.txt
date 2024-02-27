@@ -54,25 +54,28 @@ add_executable(disMech
         src/world.cpp
         robotDescription.cpp
 
-        src/rod_mechanics/baseForce.cpp
-        src/rod_mechanics/elasticRod.cpp
-        src/rod_mechanics/elasticJoint.cpp
-        src/rod_mechanics/softRobots.cpp
+        src/mechanics/baseForce.cpp
+        src/mechanics/elasticRod.cpp
+        src/mechanics/elasticJoint.cpp
+        src/mechanics/softRobots.cpp
+        src/mechanics/elasticShell.cpp
 
-        src/rod_mechanics/forceContainer.cpp
+        src/mechanics/forceContainer.cpp
 
-        src/rod_mechanics/inner_forces/inertialForce.cpp
-        src/rod_mechanics/inner_forces/elasticStretchingForce.cpp
-        src/rod_mechanics/inner_forces/elasticBendingForce.cpp
-        src/rod_mechanics/inner_forces/elasticTwistingForce.cpp
+        src/mechanics/inner_forces/inertialForce.cpp
+        src/mechanics/inner_forces/elasticStretchingForce.cpp
+        src/mechanics/inner_forces/elasticStretchingForceShell.cpp
+        src/mechanics/inner_forces/elasticBendingForce.cpp
+        src/mechanics/inner_forces/elasticBendingForceShell.cpp
+        src/mechanics/inner_forces/elasticTwistingForce.cpp
 
-        src/rod_mechanics/external_forces/gravityForce.cpp
-        src/rod_mechanics/external_forces/dampingForce.cpp
-        src/rod_mechanics/external_forces/floorContactForce.cpp
-        src/rod_mechanics/external_forces/symbolicEquations.cpp
-        src/rod_mechanics/external_forces/uniformConstantForce.cpp
-        src/rod_mechanics/external_forces/collisionDetector.cpp
-        src/rod_mechanics/external_forces/contactForce.cpp
+        src/mechanics/external_forces/gravityForce.cpp
+        src/mechanics/external_forces/dampingForce.cpp
+        src/mechanics/external_forces/floorContactForce.cpp
+        src/mechanics/external_forces/symbolicEquations.cpp
+        src/mechanics/external_forces/uniformConstantForce.cpp
+        src/mechanics/external_forces/collisionDetector.cpp
+        src/mechanics/external_forces/contactForce.cpp
 
         src/time_steppers/baseTimeStepper.cpp
 
@@ -90,6 +93,7 @@ add_executable(disMech
 
         src/logging/worldLogger.cpp
         src/logging/rodNodeLogger.cpp
+        src/logging/shellNodeLogger.cpp
         src/logging/velocityLogger.cpp
 
         src/simulation_environments/derSimulationEnvironment.cpp
@@ -129,7 +133,7 @@ if (OpenMP_CXX_FOUND)
     target_link_libraries(disMech PUBLIC OpenMP::OpenMP_CXX)
 endif ()
 
-set(CREATE_DOC_FLAG "true") # make this flag true if you want to generate documentation
+set(CREATE_DOC_FLAG "false") # make this flag true if you want to generate documentation
 
 if(CREATE_DOC_FLAG)
     add_subdirectory("docs")

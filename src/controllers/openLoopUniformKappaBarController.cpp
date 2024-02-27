@@ -1,5 +1,5 @@
 #include "openLoopUniformKappaBarController.h"
-#include "rod_mechanics/softRobots.h"
+#include "mechanics/softRobots.h"
 #include <fstream>
 
 

@@ -44,5 +44,7 @@ void explicitTimeStepper::constructInverseMassVector() {
 // We simply define these to make sure derived classes are not abstract classes
 // Perhaps a better way to design this later
 void explicitTimeStepper::integrator() {}
-void explicitTimeStepper::addJacobian(int ind1, int ind2, double p, int limb_indx) {}
-void explicitTimeStepper::addJacobian(int ind1, int ind2, double p, int limb_indx1, int limb_idx2) {}
+void explicitTimeStepper::addJacobian(int ind1, int ind2, double p, int limb_idx) {}
+void explicitTimeStepper::addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx) {}
+void explicitTimeStepper::addJacobianShell(int ind1, int ind2, double p, int shell_limb_idx1, int shell_limb_idx2) {}
+void explicitTimeStepper::addJacobian(int ind1, int ind2, double p, int limb_idx1, int limb_idx2) {}
