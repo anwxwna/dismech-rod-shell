@@ -19,7 +19,25 @@ shellNodeLogger::shellNodeLogger(std::string logfile_base, std::string logfile_s
 shellNodeLogger::~shellNodeLogger() = default;
 
 string shellNodeLogger::getLogHeader() {
-    return "";
+
+    ostringstream log_data;
+    log_data << world_ptr->getCurrentTime();
+    for (const auto& shell_limb : world_ptr->soft_robots->shell_limbs) {
+        for (int i = 0; i < shell_limb->ne; i++) {
+            int n1 = shell_limb->EdgeIsBet[i][0] ; // node 1 number
+            int n2 = shell_limb->EdgeIsBet[i][1] ; // node 2 number
+
+            // Vector3d v1 = shell_limb->getVertex(n1);
+            // Vector3d v2 = shell_limb->getVertex(n2);
+            // log_data << "," << v1(0) << "," << v1(1) << "," << v1(2);
+            log_data << "," << n1 << "," << n2;
+
+
+        }
+
+    }
+    return log_data.str();
+
 }
 
 string shellNodeLogger::getLogData() {
@@ -33,3 +51,5 @@ string shellNodeLogger::getLogData() {
     }
     return log_data.str();
 }
+
+

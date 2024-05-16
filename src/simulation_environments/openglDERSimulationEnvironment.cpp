@@ -129,7 +129,7 @@ void openglDERSimulationEnvironment::derOpenGLDisplay(void) {
         }
 
         // Draw shell
-        int shell_limb_idx = 0;
+        int shell_limb_idx = 0; // QUESTION Why is this not being incremented?
         for (const auto &shell_limb: opengl_world->soft_robots->shell_limbs) {
             for (int i = 0; i < shell_limb->ne; i++) {
                 int n1 = shell_limb->EdgeIsBet[i][0] ; // node 1 number

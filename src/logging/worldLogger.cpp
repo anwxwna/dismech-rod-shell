@@ -135,7 +135,6 @@ worldLogger::worldLogger(std::string fileNamePrefix, std::string file_name_suffi
 
 
 
-
 // destructor: nothing.
 worldLogger::~worldLogger()
 {
@@ -165,7 +164,7 @@ void worldLogger::initLogFile()
 //    // Timestamp the file, TO-DO: including milliseconds, just in case we have multiple starts within a second.
 //    m_dataFile << "Log started on " << getTimestamp() << std::endl;
 //    // here's where the subclass' implementation is called.
-//    m_dataFile << getLogHeader() << std::endl;
+    m_dataFile << getLogHeader() << std::endl;
 
     // Close for now. Will get re-opened during each write.
     m_dataFile.close();
@@ -191,6 +190,7 @@ int worldLogger::countLinesInLog()
 // Writing to the file itself.
 void worldLogger::logWorldData()
 {
+
     // Only log at the given period.
     if (world_ptr->getTimeStep() % period == 0) {
         // Open the log file for writing, appending and not overwriting.
